@@ -65,11 +65,14 @@ public:
 	// will be added as a co-routine in the same thread as the currCtx.
 	asIScriptContext *AddContextForCoRoutine(asIScriptContext *currCtx, asIScriptFunction *func);
 
+	// POLYGINE START
 	// Execute each script that is not currently sleeping. The function returns after
 	// each script has been executed once. The application should call this function
 	// for each iteration of the message pump, or game loop, or whatever.
+	// The exceptionHandler is a function that will be called for every exception that is thrown.
 	// Returns the number of scripts still in execution.
-	int ExecuteScripts();
+	int ExecuteScripts(void(*exceptionHandler)(asIScriptContext*) = nullptr);
+	// POLYGINE END
 
 	// Put a script to sleep for a while
 	void SetSleeping(asIScriptContext *ctx, asUINT milliSeconds);

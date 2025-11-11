@@ -150,7 +150,7 @@ CContextMgr::~CContextMgr()
 	}
 }
 
-int CContextMgr::ExecuteScripts()
+int CContextMgr::ExecuteScripts(void(*exceptionHandler)(asIScriptContext*))
 {
 	// TODO: Should have an optional time out for this function. If not all scripts executed before the
 	//       time out, the next time the function is called the loop should continue
@@ -180,6 +180,11 @@ int CContextMgr::ExecuteScripts()
 			engine->GetGCStatistics(&gcSize2);
 			m_numGCObjectsCreated += gcSize2 - gcSize1;
 			m_numExecutions++;
+
+			if (exceptionHandler && r == asEXECUTION_EXCEPTION)
+			{
+				exceptionHandler(thread->coRoutines[currentCoRoutine]);
+			}
 
 			if( r != asEXECUTION_SUSPENDED )
 			{
