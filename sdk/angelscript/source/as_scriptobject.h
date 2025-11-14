@@ -123,6 +123,8 @@ public:
 	void CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *objType, asCScriptEngine *engine);
 	int  CopyFromAs(const asCScriptObject *other, asCObjectType *objType);
 
+	void SetExternallyManaged(bool value);
+
 	void CallDestructor();
 
 //=============================================
@@ -137,6 +139,7 @@ protected:
 	mutable asCAtomic refCount;
 	mutable asBYTE    gcFlag:1;
 	mutable asBYTE    hasRefCountReachedZero:1;
+	mutable asBYTE    externallyManaged:1;
 	bool              isDestructCalled;
 
 	// Most script classes instances won't have neither the weakRefFlags nor

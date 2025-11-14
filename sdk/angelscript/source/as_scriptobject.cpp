@@ -340,6 +340,7 @@ asCScriptObject::asCScriptObject(asCObjectType *ot, bool doInitialize)
 	isDestructCalled = false;
 	extra = 0;
 	hasRefCountReachedZero = false;
+	externallyManaged = false;
 
 	// Notify the garbage collector of this object
 	if( objType->flags & asOBJ_GC )
@@ -395,14 +396,17 @@ void asCScriptObject::Destruct()
 	// Call the destructor, which will also call the GCObject's destructor
 	this->~asCScriptObject();
 
-	// Free the memory
+	if( !externallyManaged )
+	{
+		// Free the memory
 #ifndef WIP_16BYTE_ALIGN
-	userFree(this);
+		userFree(this);
 #else
-	// Script object memory is allocated through asCScriptEngine::CallAlloc()
-	// This free call must match the allocator used in CallAlloc().
-	userFreeAligned(this);
+		// Script object memory is allocated through asCScriptEngine::CallAlloc()
+		// This free call must match the allocator used in CallAlloc().
+		userFreeAligned(this);
 #endif
+	}
 }
 
 asCScriptObject::~asCScriptObject()
@@ -1127,6 +1131,11 @@ void asCScriptObject::CopyHandle(asPWORD *src, asPWORD *dst, asCObjectType *in_o
 	*dst = *src;
 	if( *dst && in_objType->beh.addref )
 		engine->CallObjectMethod(*(void**)dst, in_objType->beh.addref);
+}
+
+void asCScriptObject::SetExternallyManaged(bool value)
+{
+	externallyManaged = value;
 }
 
 // TODO: weak: Should move to its own file

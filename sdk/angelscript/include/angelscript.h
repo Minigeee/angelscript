@@ -766,6 +766,7 @@ public:
 	virtual asIScriptContext      *CreateContext() = 0;
 	virtual void                  *CreateScriptObject(const asITypeInfo *type) = 0;
 	virtual void                  *CreateScriptObjectCopy(void *obj, const asITypeInfo *type) = 0;
+	virtual void                   CreateScriptObjectCopy(void *mem, void *obj, const asITypeInfo *type) = 0;
 	virtual void                  *CreateUninitializedScriptObject(const asITypeInfo *type) = 0;
 	virtual asIScriptFunction     *CreateDelegate(asIScriptFunction *func, void *obj) = 0;
 	virtual int                    AssignScriptObject(void *dstObj, void *srcObj, const asITypeInfo *type) = 0;

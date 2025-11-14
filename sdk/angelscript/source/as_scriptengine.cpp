@@ -5643,6 +5643,99 @@ void *asCScriptEngine::CreateScriptObjectCopy(void *origObj, const asITypeInfo *
 	return newObj;
 }
 
+// interface
+void asCScriptEngine::CreateScriptObjectCopy(void *mem, void *obj, const asITypeInfo *type)
+{
+	if( mem == 0 || obj == 0 || type == 0 ) return;
+
+	asCObjectType* ot = CastToObjectType(const_cast<asCTypeInfo*>(reinterpret_cast<const asCTypeInfo*>(type)));
+	if( ot == 0 ) return;
+
+	// For script objects (ref types), we need to construct uninitialized first
+	// to initialize the object header (refCount, objType, etc.)
+	if( ot->flags & asOBJ_SCRIPT_OBJECT )
+	{
+		asCScriptObject *scriptObj = reinterpret_cast<asCScriptObject*>(mem);
+		ScriptObject_ConstructUnitialized(ot, scriptObj);
+		scriptObj->SetExternallyManaged(true);
+		
+		// Now copy from the source object
+		
+		// Use CopyFrom which handles the assignment operator
+		scriptObj->CopyFrom(reinterpret_cast<asCScriptObject*>(obj));
+		return;
+	}
+
+	// For value types, call the copy constructor directly
+	if( ot->flags & asOBJ_VALUE )
+	{
+		// Call the copy constructor if available, else call the default constructor followed by the opAssign
+		int funcIndex = ot->beh.copyconstruct;
+		if( funcIndex )
+		{
+#ifdef AS_NO_EXCEPTIONS
+			CallObjectMethod(mem, obj, funcIndex);
+#else
+			try
+			{
+				CallObjectMethod(mem, obj, funcIndex);
+			}
+			catch(...)
+			{
+				asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
+				if( ctx )
+					ctx->HandleAppException();
+			}
+#endif
+		}
+		else
+		{
+			funcIndex = ot->beh.construct;
+			if( funcIndex )
+			{
+#ifdef AS_NO_EXCEPTIONS
+				CallObjectMethod(mem, funcIndex);
+#else
+				try
+				{
+					CallObjectMethod(mem, funcIndex);
+				}
+				catch(...)
+				{
+					asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
+					if( ctx )
+						ctx->HandleAppException();
+				}
+#endif
+			}
+
+			AssignScriptObject(mem, obj, type);
+		}
+		return;
+	}
+
+	// For other ref types with copyconstruct, call it directly
+	// Note: The memory must already be properly allocated (e.g., via factory)
+	if( ot->flags & asOBJ_REF && ot->beh.copyconstruct )
+	{
+#ifdef AS_NO_EXCEPTIONS
+		CallObjectMethod(mem, obj, ot->beh.copyconstruct);
+#else
+		try
+		{
+			CallObjectMethod(mem, obj, ot->beh.copyconstruct);
+		}
+		catch(...)
+		{
+			asCContext *ctx = reinterpret_cast<asCContext*>(asGetActiveContext());
+			if( ctx )
+				ctx->HandleAppException();
+		}
+#endif
+		return;
+	}
+}
+
 // internal
 void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectType *type)
 {
@@ -5651,20 +5744,20 @@ void asCScriptEngine::ConstructScriptObjectCopy(void *mem, void *obj, asCObjectT
 	// This function is only meant to be used for value types
 	asASSERT( type->flags & asOBJ_VALUE );
 
-	// Call the copy constructor if available, else call the default constructor followed by the opAssign
-	int funcIndex = type->beh.copyconstruct;
-	if( funcIndex )
-	{
-		CallObjectMethod(mem, obj, funcIndex);
-	}
-	else
-	{
-		funcIndex = type->beh.construct;
+		// Call the copy constructor if available, else call the default constructor followed by the opAssign
+		int funcIndex = type->beh.copyconstruct;
 		if( funcIndex )
-			CallObjectMethod(mem, funcIndex);
+		{
+			CallObjectMethod(mem, obj, funcIndex);
+		}
+		else
+		{
+			funcIndex = type->beh.construct;
+			if( funcIndex )
+				CallObjectMethod(mem, funcIndex);
 
-		AssignScriptObject(mem, obj, type);
-	}
+			AssignScriptObject(mem, obj, type);
+		}
 }
 
 // interface
