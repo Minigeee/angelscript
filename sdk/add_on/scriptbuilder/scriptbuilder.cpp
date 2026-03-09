@@ -472,7 +472,7 @@ int CScriptBuilder::ProcessScriptSection(const char *script, unsigned int length
 			// Store away the declaration in a map for lookup after the build has completed
 			if( type > 0 )
 			{
-				SMetadataDecl decl(metadata, name, declaration, type, currentClass, currentNamespace);
+				CScriptBuilderMetadataDecl decl(metadata, name, declaration, type, currentClass, currentNamespace);
 				foundDeclarations.push_back(decl);
 			}
 		}
@@ -623,7 +623,7 @@ int CScriptBuilder::Build()
 	// stored for later lookup by function id, type id, and variable index
 	for( int n = 0; n < (int)foundDeclarations.size(); n++ )
 	{
-		SMetadataDecl *decl = &foundDeclarations[n];
+		CScriptBuilderMetadataDecl *decl = &foundDeclarations[n];
 		module->SetDefaultNamespace(decl->nameSpace.c_str());
 		if( decl->type == MDT_TYPE )
 		{
@@ -1133,6 +1133,18 @@ vector<string> CScriptBuilder::GetMetadataForTypeMethod(int typeId, asIScriptFun
 	}
 
 	return vector<string>();
+}
+
+unsigned int CScriptBuilder::GetMetadataDeclarationCount() const
+{
+	return (unsigned int)foundDeclarations.size();
+}
+
+const CScriptBuilder::CScriptBuilderMetadataDecl* CScriptBuilder::GetMetadataDeclaration(unsigned int idx) const
+{
+	if( idx >= foundDeclarations.size() )
+		return 0;
+	return &foundDeclarations[idx];
 }
 #endif
 

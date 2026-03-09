@@ -114,6 +114,22 @@ public:
 
 	// Get metadata declared for class methods
 	std::vector<std::string> GetMetadataForTypeMethod(int typeId, asIScriptFunction *method);
+
+	struct CScriptBuilderMetadataDecl
+	{
+		CScriptBuilderMetadataDecl(std::vector<std::string> m, std::string n, std::string d, int t, std::string c, std::string ns)
+			: metadata(std::move(m)), name(std::move(n)), declaration(std::move(d)), type(t), parentClass(std::move(c)), nameSpace(std::move(ns)) {}
+		std::vector<std::string> metadata;
+		std::string name;
+		std::string declaration;
+		int type;
+		std::string parentClass;
+		std::string nameSpace;
+	};
+
+	// Enumerate parsed metadata declarations (before Build maps them to module entities)
+	unsigned int GetMetadataDeclarationCount() const;
+	const CScriptBuilderMetadataDecl* GetMetadataDeclaration(unsigned int idx) const;
 #endif
 
 protected:
@@ -151,18 +167,7 @@ protected:
 		MDT_FUNC_OR_VAR = 5
 	};
 
-	// Temporary structure for storing metadata and declaration
-	struct SMetadataDecl
-	{
-		SMetadataDecl(std::vector<std::string> m, std::string n, std::string d, int t, std::string c, std::string ns) : metadata(m), name(n), declaration(d), type(t), parentClass(c), nameSpace(ns) {}
-		std::vector<std::string> metadata;
-		std::string              name;
-		std::string              declaration;
-		int                      type;
-		std::string              parentClass;
-		std::string              nameSpace;
-	};
-	std::vector<SMetadataDecl> foundDeclarations;
+	std::vector<CScriptBuilderMetadataDecl> foundDeclarations;
 	std::string                currentClass;
 	std::string                currentNamespace;
 	std::vector<int>           currentNamespaceStack;
